@@ -32,10 +32,10 @@
         "symfony/yaml": "2.5.*@stable",
         "symfony/http-kernel": "2.5.*@stable",
         "symfony/framework-bundle": "2.5.*@stable",
-        "zendframework/zend-eventmanager": "2.3.*@dev",
-        "zendframework/zend-modulemanager": "2.3.*@dev",
-        "zendframework/zend-servicemanager": "2.3.*@dev",
-        "zendframework/zend-loader": "2.3.*@dev"
+
+        "zendframework/zend-mvc": "2.3.1",
+        "zendframework/zend-modulemanager": "2.3.1",
+        "zendframework/zend-loader": "2.3.1"
     },
     "autoload": {
         "psr-4": {
