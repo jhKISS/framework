@@ -59,8 +59,26 @@ class ModuleManagerFactory implements FactoryInterface
             'Zend\ModuleManager\Feature\RouteProviderInterface',
             'getRouteConfig'
         );
+        $serviceListener->addServiceManager(
+            'ControllerLoader',
+            'controllers',
+            'Zend\ModuleManager\Feature\ControllerProviderInterface',
+            'getControllerConfig'
+        );
+        $serviceListener->addServiceManager(
+            'ControllerPluginManager',
+            'controller_plugins',
+            'Zend\ModuleManager\Feature\ControllerPluginProviderInterface',
+            'getControllerPluginConfig'
+        );
+        $serviceListener->addServiceManager(
+            'RoutePluginManager',
+            'route_manager',
+            'Zend\ModuleManager\Feature\RouteProviderInterface',
+            'getRouteConfig'
+        );
 
-        $modules = isset($config['modules']['active_modules']) ? $config['modules']['active_modules'] : array();
+        $activeModules = isset($config['modules']['active_modules']) ? $config['modules']['active_modules'] : array();
 
         $events = $serviceLocator->get('EventManager');
         $events->attach($defaultListeners);
@@ -69,7 +87,7 @@ class ModuleManagerFactory implements FactoryInterface
         $moduleEvent = new ModuleEvent();
         $moduleEvent->setParam('ServiceManager', $serviceLocator);
 
-        $moduleManager = new ModuleManager($modules, $events);
+        $moduleManager = new ModuleManager($activeModules, $events);
         $moduleManager->setEvent($moduleEvent);
 
         return $moduleManager;
