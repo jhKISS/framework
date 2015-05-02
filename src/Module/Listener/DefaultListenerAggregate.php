@@ -20,8 +20,7 @@ use Zend\ModuleManager\Listener\ModuleLoaderListener;
 use Zend\ModuleManager\Listener\ModuleResolverListener;
 use Zend\ModuleManager\ModuleEvent;
 use Zend\Stdlib\ArrayUtils;
-
-$x = 0;
+use Aura\Router\Router as AuraRouter;
 
 /**
  * DefaultListenerAggregate class.
@@ -91,7 +90,7 @@ class DefaultListenerAggregate extends ZendDefaultListenerAggregate
         // This process can be expensive and affect perf if enabled. So we have
         // the flexibility to skip it.
         //if ($options->routingEnabled) {
-            $this->listeners[] = $events->attach(ModuleEvent::EVENT_LOAD_MODULE, array($this, 'routesTrigger'), 3000);
+        $this->listeners[] = $events->attach(ModuleEvent::EVENT_LOAD_MODULE, array($this, 'routesTrigger'), 3000);
         //}
 
         // @todo - this could be moved to a ZF event, so no need to make this ourselves.
@@ -101,18 +100,20 @@ class DefaultListenerAggregate extends ZendDefaultListenerAggregate
     }
 
     /**
-     * Event callback for 'routesTrigger'.
+     * Callback for 'routesTrigger' event
      *
      * @param ModuleEvent $e
      *
      * @return $this
+     * @throws \Exception if the module returns an invalid route type
      */
     public function routesTrigger(ModuleEvent $e)
     {
         $module = $e->getModule();
 
         if (is_callable(array($module, 'getRoutes'))) {
-            $this->routes[$e->getModuleName()] = $module->getRoutes();
+            $routes = $module->getRoutes();
+            $this->routes[$e->getModuleName()] = $routes;
         }
 
         return $this;

@@ -11,10 +11,14 @@
 namespace PPI\Framework\ServiceManager\Factory;
 
 use PPI\Framework\Router\Router;
-use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\Routing\RouteCollection;
+use PPI\Framework\Router\ChainRouter;
 use Zend\ServiceManager\FactoryInterface;
+use PPI\Framework\Router\Wrapper\SymfonyRouterWrapper;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Symfony\Component\Routing\RouteCollection as SymfonyRouteCollection;
+
+use Aura\Router\Router as AuraRouter;
+use PPI\Framework\Router\Wrapper\AuraRouterWrapper;
 
 /**
  * Router Factory.
@@ -25,28 +29,41 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class RouterFactory implements FactoryInterface
 {
     /**
-     * Create and return the router.
-     *
      * @param ServiceLocatorInterface $serviceLocator
-     *
-     * @return \PPI\Framework\Router\Router
+     * @return ChainRouter
+     * @throws \Exception
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $routeCollection = new RouteCollection();
         $requestContext  = $serviceLocator->get('RouterRequestContext');
         $routerOptions   = array();
 
         $logger = $serviceLocator->has('Logger') ? $serviceLocator->get('Logger') : null;
 
-        $router = new Router($requestContext, $routeCollection, $routerOptions, $logger);
+        $chainRouter = new ChainRouter($logger);
+        $chainRouter->setContext($requestContext);
 
-        $allRoutes = $serviceLocator->get('ModuleDefaultListener')->getRoutes();
-        foreach ($allRoutes as $routes) {
-            $routeCollection->addCollection($routes);
+        $allModuleRoutes = $serviceLocator->get('ModuleDefaultListener')->getRoutes();
+        foreach ($allModuleRoutes as $moduleName => $moduleRoutingResponse) {
+
+            switch(true) {
+                case $moduleRoutingResponse instanceof SymfonyRouteCollection:
+                    // Create a new router for each module
+                    $sfRouter = new Router($requestContext, $moduleRoutingResponse, $routerOptions, $logger);
+                    $sfRouterWrapper = new SymfonyRouterWrapper($sfRouter);
+                    $chainRouter->add($sfRouterWrapper);
+                    break;
+
+                case $moduleRoutingResponse instanceof AuraRouter:
+                    $auraRouterWrapper = new AuraRouterWrapper($moduleRoutingResponse);
+                    $chainRouter->add($auraRouterWrapper);
+                    break;
+
+                default:
+                    throw new \Exception('Unexpected routes value return from module: ' . $moduleName . ' - found value: ' . gettype($routes));
+            }
         }
-        $router->setRouteCollection($routeCollection);
 
-        return $router;
+        return $chainRouter;
     }
 }
